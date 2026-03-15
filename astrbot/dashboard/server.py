@@ -12,6 +12,7 @@ from typing import Protocol
 
 import jwt
 import psutil
+import werkzeug.exceptions
 from flask.json.provider import DefaultJSONProvider
 from hypercorn.asyncio import serve
 from hypercorn.config import Config as HyperConfig
@@ -106,10 +107,16 @@ class AstrBotDashboard:
             if os.path.exists(user_dist):
                 self.data_path = os.path.abspath(user_dist)
             elif _BUNDLED_DIST.exists():
-                self.data_path = str(_BUNDLED_DIST)
+                self.data_path = str(_BUNDLED_DIST.absolute())
                 logger.info("Using bundled dashboard dist: %s", self.data_path)
             else:
                 self.data_path = os.path.abspath(user_dist)
+
+        if self.enable_webui and not (Path(self.data_path) / "index.html").exists():
+            raise RuntimeError(
+                f"Dashboard static assets not found: index.html is missing in {self.data_path}. "
+                "Please run the WebUI build step."
+            )
 
     def _init_app(self):
         """初始化 Quart 应用"""
@@ -137,7 +144,11 @@ class AstrBotDashboard:
         async def index():
             if not self.enable_webui:
                 return "WebUI is disabled."
-            return await self.app.send_static_file("index.html")
+            try:
+                return await self.app.send_static_file("index.html")
+            except werkzeug.exceptions.NotFound:
+                logger.error(f"Dashboard index.html not found in {self.data_path}")
+                return "Dashboard files not found.", 404
 
         @self.app.errorhandler(404)
         async def not_found(e):
@@ -145,7 +156,10 @@ class AstrBotDashboard:
                 return "WebUI is disabled."
             if request.path.startswith("/api/"):
                 return jsonify(Response().error("Not Found").to_json()), 404
-            return await self.app.send_static_file("index.html")
+            try:
+                return await self.app.send_static_file("index.html")
+            except werkzeug.exceptions.NotFound:
+                return "Dashboard files not found.", 404
 
         @self.app.before_serving
         async def startup():
