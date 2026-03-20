@@ -7,7 +7,7 @@ import click
 from click.shell_completion import get_completion_class
 
 from . import __version__
-from .commands import bk, conf, init, plug, run, uninstall, webui
+from .commands import bk, conf, init, plug, run, uninstall
 
 logo_tmpl = r"""
      ___           _______.___________..______      .______     ______   .___________.
@@ -77,7 +77,6 @@ def help(command_name: str | None, all: bool) -> None:
 
 cli.add_command(init)
 cli.add_command(run)
-cli.add_command(webui)
 cli.add_command(help)
 cli.add_command(plug)
 cli.add_command(conf)
@@ -105,6 +104,9 @@ def completion(shell: str | None) -> None:
             sys.exit(1)
 
     comp_cls = get_completion_class(shell)
+    if comp_cls is None:
+        click.echo(f"No completion support for shell: {shell}", err=True)
+        sys.exit(1)
     comp = comp_cls(
         cli, ctx_args={}, prog_name="astrbot", complete_var="_ASTRBOT_COMPLETE"
     )
