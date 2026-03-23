@@ -128,6 +128,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         custom_compressor: ContextCompressor | None = None,
         tool_schema_mode: str | None = "full",
         fallback_providers: list[Provider] | None = None,
+        provider_config: dict | None = None,
         **kwargs: Any,
     ) -> None:
         self.req = request
@@ -224,7 +225,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         self, *, include_model: bool = True
     ) -> AsyncGenerator[LLMResponse, None]:
         """Yields chunks *and* a final LLMResponse."""
-        payload = {
+        payload: dict[str, Any] = {
             "contexts": self.run_context.messages,  # list[Message]
             "func_tool": self.req.func_tool,
             "session_id": self.req.session_id,
@@ -236,7 +237,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             payload["model"] = self.req.model
         if self.streaming:
             stream = self.provider.text_chat_stream(**payload)
-            async for resp in stream:  # type: ignore
+            async for resp in stream:
                 yield resp
         else:
             yield await self.provider.text_chat(**payload)

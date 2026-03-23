@@ -14,22 +14,23 @@ Core:
 - `PYTHON`: Python executable path override (for local code execution).
 
 Dashboard / Backend:
-- `ASTRBOT_DASHBOARD_ENABLE` / `DASHBOARD_ENABLE`: Enable/Disable Dashboard.
-- `ASTRBOT_HOST` / `DASHBOARD_HOST`: Dashboard bind host.
-- `ASTRBOT_PORT` / `DASHBOARD_PORT`: Dashboard bind port.
+- `ASTRBOT_DASHBOARD_ENABLE`: Enable/Disable Dashboard.
+- `ASTRBOT_HOST`: Dashboard bind host.
+- `ASTRBOT_PORT`: Dashboard bind port.
 
-Backend-standard SSL names (preferred for server):
-- `ASTRBOT_SSL_ENABLE` / `DASHBOARD_SSL_ENABLE`: Enable SSL for API.
-- `ASTRBOT_SSL_CERT` / `DASHBOARD_SSL_CERT`: SSL Certificate path for backend.
-- `ASTRBOT_SSL_KEY` / `DASHBOARD_SSL_KEY`: SSL Key path for backend.
-- `ASTRBOT_SSL_CA_CERTS` / `DASHBOARD_SSL_CA_CERTS`: SSL CA Certs path for backend.
-
-Legacy compatibility:
-- The CLI will set both `ASTRBOT_SSL_*` and the legacy `DASHBOARD_SSL_*` names to remain compatible.
+SSL (AstrBot-standard names):
+- `ASTRBOT_SSL_ENABLE`: Enable SSL for API.
+- `ASTRBOT_SSL_CERT`: SSL Certificate path for backend.
+- `ASTRBOT_SSL_KEY`: SSL Key path for backend.
+- `ASTRBOT_SSL_CA_CERTS`: SSL CA Certs path for backend.
 
 Network:
 - `http_proxy` / `https_proxy`: Proxy URL.
 - `no_proxy`: No proxy list.
+
+Internationalization:
+- `ASTRBOT_CLI_LANG`: CLI interface language (zh/en).
+- `ASTRBOT_TUI_LANG`: TUI interface language (zh/en).
 
 Integrations:
 - `DASHSCOPE_API_KEY`: Alibaba DashScope API Key (for Rerank).
@@ -195,24 +196,6 @@ def run(
             # after this point and will take precedence.
             load_dotenv(dotenv_path=str(svc_path), override=True)
 
-        # Normalize environment variables for backward compatibility
-        # If legacy env vars are set but the preferred new ones aren't, copy them over.
-        env_map = {
-            # Dashboard legacy -> standardized dashboard-prefixed
-            "DASHBOARD_ENABLE": "ASTRBOT_DASHBOARD_ENABLE",
-            "DASHBOARD_HOST": "ASTRBOT_HOST",
-            "DASHBOARD_PORT": "ASTRBOT_PORT",
-            "DASHBOARD_SSL_ENABLE": "ASTRBOT_SSL_ENABLE",
-            "DASHBOARD_SSL_CERT": "ASTRBOT_SSL_CERT",
-            "DASHBOARD_SSL_KEY": "ASTRBOT_SSL_KEY",
-            "DASHBOARD_SSL_CA_CERTS": "ASTRBOT_SSL_CA_CERTS",
-            # Some packages used alternate names
-            "ASTRBOT_DASHBOARD_SSL_CERT": "ASTRBOT_SSL_CERT",
-        }
-        for legacy, new in env_map.items():
-            if legacy in os.environ and new not in os.environ:
-                os.environ[new] = os.environ[legacy]
-
         # Mark CLI execution
         os.environ["ASTRBOT_CLI"] = "1"
 
@@ -242,29 +225,20 @@ def run(
         # Host/Port precedence: CLI args > parsed service config/env/.env > defaults.
         if port is not None:
             os.environ["ASTRBOT_PORT"] = port
-            os.environ["DASHBOARD_PORT"] = port  # legacy
-        # If CLI didn't provide port but env/.env provided ASTRBOT_DASHBOARD_PORT, leave it as-is.
 
         if host is not None:
             os.environ["ASTRBOT_HOST"] = host
-            os.environ["DASHBOARD_HOST"] = host  # legacy
-        # If CLI didn't provide host but env/.env provided ASTRBOT_DASHBOARD_HOST, leave it as-is.
 
-        # CLI-provided SSL paths should set backend-standard env names (preferred),
-        # and also set legacy/dashboard names for compatibility.
+        # CLI-provided SSL paths should set backend-standard env names.
         if ssl_cert is not None:
             os.environ["ASTRBOT_SSL_CERT"] = ssl_cert
-            os.environ["DASHBOARD_SSL_CERT"] = ssl_cert
         if ssl_key is not None:
             os.environ["ASTRBOT_SSL_KEY"] = ssl_key
-            os.environ["DASHBOARD_SSL_KEY"] = ssl_key
         if ssl_ca is not None:
             os.environ["ASTRBOT_SSL_CA_CERTS"] = ssl_ca
-            os.environ["DASHBOARD_SSL_CA_CERTS"] = ssl_ca
 
         # Dashboard enable is derived from CLI flag (--backend-only). CLI decision should win.
         os.environ["ASTRBOT_DASHBOARD_ENABLE"] = str(not backend_only)
-        os.environ["DASHBOARD_ENABLE"] = str(not backend_only)  # legacy
 
         os.environ["ASTRBOT_LOG_LEVEL"] = log_level
 
@@ -332,12 +306,29 @@ def run(
         lock_file = astrbot_root / "astrbot.lock"
         lock = FileLock(lock_file, timeout=5)
         with lock.acquire():
-            click.echo("AstrBot is running...")
-            if backend_only:
-                click.echo("Visit the dashboard at : https://dash.astrbot.men/")
-                click.echo("Backend Requests : localhost or based on https")
+            # Use TUI if in interactive TTY mode
+            if sys.stdin.isatty() and sys.stdout.isatty():
+                from astrbot.cli.commands.cmd_run_tui import run_tui
 
-            asyncio.run(run_astrbot(astrbot_root))
+                async def wrapped_startup() -> None:
+                    await run_astrbot(astrbot_root)
+
+                asyncio.run(
+                    run_tui(
+                        startup_coro=wrapped_startup,
+                        astrbot_root=astrbot_root,
+                        backend_only=backend_only,
+                        host=os.environ.get("ASTRBOT_HOST"),
+                        port=os.environ.get("ASTRBOT_PORT"),
+                    )
+                )
+            else:
+                click.echo("AstrBot is running...")
+                if backend_only:
+                    click.echo("Visit the dashboard at : https://dash.astrbot.men/")
+                    click.echo("Backend Requests : localhost or based on https")
+
+                asyncio.run(run_astrbot(astrbot_root))
     except KeyboardInterrupt:
         click.echo("AstrBot has been shut down.")
     except Timeout:

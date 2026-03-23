@@ -57,6 +57,7 @@ from .routes import (
     SubAgentRoute,
     T2iRoute,
     ToolsRoute,
+    TUIChatRoute,
     UpdateRoute,
 )
 from .routes.api_key import ALL_OPEN_API_SCOPES
@@ -152,9 +153,7 @@ class AstrBotDashboard:
 
     def _check_webui_enabled(self) -> bool:
         cfg = self.config.get("dashboard", {})
-        _env = os.environ.get(
-            "ASTRBOT_DASHBOARD_ENABLE", os.environ.get("DASHBOARD_ENABLE")
-        )
+        _env = os.environ.get("ASTRBOT_DASHBOARD_ENABLE")
         if _env is not None:
             return _env.lower() in ("true", "1", "yes")
         return cfg.get("enable", True)
@@ -178,8 +177,8 @@ class AstrBotDashboard:
 
         if self.enable_webui and not (Path(self.data_path) / "index.html").exists():
             logger.warning(
-                f"Dashboard static assets not found: index.html is missing in {self.data_path}. "
-                "WebUI will be disabled."
+                f"找不到内置前端 (index.html missing in {self.data_path})，"
+                "但你可以通过在线面板访问：dash.astrbot.men"
             )
             self.enable_webui = False
 
@@ -299,6 +298,7 @@ class AstrBotDashboard:
         self.platform_route = PlatformRoute(self.context, self.core_lifecycle)
         self.backup_route = BackupRoute(self.context, db, self.core_lifecycle)
         self.live_chat_route = LiveChatRoute(self.context, db, self.core_lifecycle)
+        self.tui_chat_route = TUIChatRoute(self.context, db, self.core_lifecycle)
 
         self.app.add_url_rule(
             "/api/plug/<path:subpath>",
@@ -474,33 +474,36 @@ class AstrBotDashboard:
     async def run(self) -> None:
         """Run dashboard server (blocking)"""
         if not self.enable_webui:
-            logger.warning(
-                "WebUI 已禁用 (dashboard.enable=false or DASHBOARD_ENABLE=false)"
-            )
+            logger.warning("内置前端已禁用，请访问在线前端面板：dash.astrbot.men")
 
         dashboard_config = self.config.get("dashboard", {})
         host_value = (
             os.environ.get("ASTRBOT_HOST")
-            or os.environ.get("DASHBOARD_HOST")
             or dashboard_config.get("host", "0.0.0.0")
         )
         host = _resolve_dashboard_value(host_value, field_name="host")
         if not isinstance(host, str) or not host:
             raise ValueError("Dashboard host must be a non-empty string")
 
-        port_value = (
-            os.environ.get("ASTRBOT_PORT")
-            or os.environ.get("DASHBOARD_PORT")
-            or dashboard_config.get("port", 6185)
-        )
+        # Port priority: ASTRBOT_PORT env var > cmd_config.json dashboard.port > default 6185
+        env_port = os.environ.get("ASTRBOT_PORT")
+        json_port = dashboard_config.get("port")
+        if env_port is not None:
+            port_value = env_port
+            logger.info("[Dashboard] Using port from ASTRBOT_PORT environment variable: %s", env_port)
+        elif json_port is not None:
+            port_value = json_port
+            logger.info("[Dashboard] Using port from cmd_config.json: %s", json_port)
+        else:
+            port_value = 6185
+            logger.info("[Dashboard] Using default port: 6185")
         resolved_port = _resolve_dashboard_value(port_value, field_name="port")
         if resolved_port is None:
             raise ValueError("Port configuration is missing")
         port = int(resolved_port)
         ssl_config = dashboard_config.get("ssl", {})
         ssl_enable = _parse_env_bool(
-            os.environ.get("ASTRBOT_SSL_ENABLE")
-            or os.environ.get("DASHBOARD_SSL_ENABLE"),
+            os.environ.get("ASTRBOT_SSL_ENABLE"),
             ssl_config.get("enable", False),
         )
 
@@ -537,19 +540,16 @@ class AstrBotDashboard:
         if ssl_enable:
             cert_file = (
                 os.environ.get("ASTRBOT_SSL_CERT")
-                or os.environ.get("DASHBOARD_SSL_CERT")
                 or ssl_config.get("cert_file", "")
             )
             cert_file = _resolve_dashboard_value(cert_file, field_name="ssl.cert_file")
             key_file = (
                 os.environ.get("ASTRBOT_SSL_KEY")
-                or os.environ.get("DASHBOARD_SSL_KEY")
                 or ssl_config.get("key_file", "")
             )
             key_file = _resolve_dashboard_value(key_file, field_name="ssl.key_file")
             ca_certs = (
                 os.environ.get("ASTRBOT_SSL_CA_CERTS")
-                or os.environ.get("DASHBOARD_SSL_CA_CERTS")
                 or ssl_config.get("ca_certs", "")
             )
             ca_certs = _resolve_dashboard_value(ca_certs, field_name="ssl.ca_certs")
