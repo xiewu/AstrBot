@@ -72,7 +72,7 @@ class FunctionTool(ToolSchema, Generic[TContext]):
     def __repr__(self) -> str:
         return f"FuncTool(name={self.name}, parameters={self.parameters}, description={self.description})"
 
-    async def call(self, context: ContextWrapper[TContext], **kwargs) -> ToolExecResult:
+    async def call(self, context: ContextWrapper[TContext], **kwargs: Any) -> ToolExecResult:
         """Run the tool with the given arguments. The handler field has priority."""
         raise NotImplementedError(
             "FunctionTool.call() must be implemented by subclasses or set a handler."
@@ -145,8 +145,8 @@ class ToolSet:
             light_tools.append(
                 FunctionTool(
                     name=tool.name,
-                    parameters=light_params,
                     description=tool.description,
+                    parameters=light_params,
                     handler=None,
                 )
             )
@@ -166,8 +166,8 @@ class ToolSet:
             param_tools.append(
                 FunctionTool(
                     name=tool.name,
-                    parameters=params,
                     description="",
+                    parameters=params,
                     handler=None,
                 )
             )
@@ -218,7 +218,10 @@ class ToolSet:
         """Convert tools to OpenAI API function calling schema format."""
         result = []
         for tool in self.tools:
-            func_def = {"type": "function", "function": {"name": tool.name}}
+            func_def: dict[str, Any] = {
+                "type": "function",
+                "function": {"name": tool.name},
+            }
             if tool.description:
                 func_def["function"]["description"] = tool.description
 
@@ -226,7 +229,7 @@ class ToolSet:
                 if (
                     tool.parameters and tool.parameters.get("properties")
                 ) or not omit_empty_parameter_field:
-                    func_def["function"]["parameters"] = tool.parameters
+                    func_def["function"]["parameters"] = tool.parameters  # type: ignore[index]
 
             result.append(func_def)
         return result

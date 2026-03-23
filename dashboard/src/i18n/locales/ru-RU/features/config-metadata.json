@@ -162,6 +162,14 @@
                     "booter": {
                         "description": "Драйвер среды песочницы"
                     },
+                    "bwrap_rw_binds": {
+                        "description": "Дополнительные папки чтения-записи Bubblewrap (RW)",
+                        "hint": "Дополнительные папки для монтирования на чтение и запись в песочнице Bubblewrap (нажмите Enter для добавления. По умолчанию /tmp и /var/tmp уже доступны для записи)."
+                    },
+                    "bwrap_ro_binds": {
+                        "description": "Дополнительные папки только для чтения Bubblewrap (RO)",
+                        "hint": "Дополнительные папки для монтирования только для чтения в песочнице Bubblewrap (нажмите Enter для добавления. По умолчанию /usr, /etc и /opt уже смонтированы только для чтения)."
+                    },
                     "shipyard_neo_endpoint": {
                         "description": "Эндпоинт Shipyard Neo API",
                         "hint": "Адрес Bay API, по умолчанию http://127.0.0.1:8114."
@@ -193,6 +201,10 @@
                     "shipyard_max_sessions": {
                         "description": "Макс. количество сессий Shipyard",
                         "hint": "Максимальное количество сессий Shipyard, которое может поддерживать экземпляр."
+                    },
+                    "bwrap_rw_binds": {
+                        "description": "Bubblewrap RW Binds",
+                        "hint": "Дополнительные каталоги монтирования для чтения/записи (нажмите Enter для добавления, можно добавить несколько; по умолчанию /tmp и /var/tmp доступны для записи, а вся система хоста монтируется в режиме RO в том же расположении)."
                     }
                 }
             }
@@ -337,7 +349,7 @@
                 },
                 "image_compress_enabled": {
                     "description": "Включить сжатие изображений",
-                    "hint": "Когда включено, большие локальные изображения сжимаются перед отправкой в мультимодальные модели. Применяется только к провайдерам chat_completion."
+                    "hint": "Когда включено, большие локальные изображения сжимаются перед отправкой в мультимодальные модели."
                 },
                 "image_compress_options": {
                     "description": "Настройки сжатия изображений",
@@ -629,6 +641,30 @@
             "only_use_webhook_url_to_send": {
                 "description": "Отправлять ответы только через Webhook",
                 "hint": "Все ответы WeCom AI Bot будут идти через вебхук пуш-сообщений. Поддерживает больше типов контента."
+            },
+            "weixin_oc_base_url": {
+                "description": "URL API iLink",
+                "hint": "Значение по умолчанию: https://ilinkai.weixin.qq.com"
+            },
+            "weixin_oc_bot_type": {
+                "description": "bot_type (параметр входа по QR)",
+                "hint": "Значение по умолчанию: 3"
+            },
+            "weixin_oc_qr_poll_interval": {
+                "description": "Интервал опроса статуса QR (сек)",
+                "hint": "Пауза между запросами статуса QR-кода."
+            },
+            "weixin_oc_long_poll_timeout_ms": {
+                "description": "Таймаут long-poll getUpdates (мс)",
+                "hint": "Параметр таймаута запроса получения сообщений."
+            },
+            "weixin_oc_api_timeout_ms": {
+                "description": "Таймаут HTTP запроса (мс)",
+                "hint": "Общий таймаут для HTTP запросов."
+            },
+            "weixin_oc_token": {
+                "description": "Token после входа (опционально)",
+                "hint": "Автоматически сохраняется после QR логина; для сложных сценариев можно ввести вручную."
             },
             "kook_bot_token": {
                 "description": "Токен бота",

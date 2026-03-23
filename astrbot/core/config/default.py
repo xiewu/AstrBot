@@ -24,6 +24,38 @@ except metadata.PackageNotFoundError:
     __version__ = "unknown"
 VERSION = __version__
 DB_PATH = os.path.join(get_astrbot_data_path(), "data_v4.db")
+PERSONAL_WECHAT_CONFIG_METADATA = {
+    "weixin_oc_base_url": {
+        "description": "Base URL",
+        "type": "string",
+        "hint": "默认值: https://ilinkai.weixin.qq.com",
+    },
+    "weixin_oc_bot_type": {
+        "description": "扫码参数 bot_type",
+        "type": "string",
+        "hint": "默认值: 3",
+    },
+    "weixin_oc_qr_poll_interval": {
+        "description": "二维码状态轮询间隔(秒)",
+        "type": "int",
+        "hint": "每隔多少秒轮询一次二维码状态｡",
+    },
+    "weixin_oc_long_poll_timeout_ms": {
+        "description": "getUpdates 长轮询超时时间(毫秒)",
+        "type": "int",
+        "hint": "会话消息拉取接口超时参数｡",
+    },
+    "weixin_oc_api_timeout_ms": {
+        "description": "HTTP 请求超时(毫秒)",
+        "type": "int",
+        "hint": "通用 API 请求超时参数｡",
+    },
+    "weixin_oc_token": {
+        "description": "登录后 token(可留空)",
+        "type": "string",
+        "hint": "扫码登录成功后会自动写入;高级场景可手动填写｡",
+    },
+}
 
 WEBHOOK_SUPPORTED_PLATFORMS = [
     "qq_official_webhook",
@@ -158,10 +190,12 @@ DEFAULT_CONFIG = {
             "shipyard_neo_access_token": "",
             "shipyard_neo_profile": "python-default",
             "shipyard_neo_ttl": 3600,
+            "bwrap_rw_binds": [],
+            "bwrap_ro_binds": [],
         },
         "image_compress_enabled": True,
         "image_compress_options": {
-            "max_size": 1024,
+            "max_size": 1280,
             "quality": 95,
         },
     },
@@ -385,6 +419,16 @@ CONFIG_METADATA_2 = {
                         "webhook_uuid": "",
                         "callback_server_host": "0.0.0.0",
                         "port": 6198,
+                    },
+                    "个人微信": {
+                        "id": "weixin_personal",
+                        "type": "weixin_oc",
+                        "enable": False,
+                        "weixin_oc_base_url": "https://ilinkai.weixin.qq.com",
+                        "weixin_oc_bot_type": "3",
+                        "weixin_oc_qr_poll_interval": 1,
+                        "weixin_oc_long_poll_timeout_ms": 35_000,
+                        "weixin_oc_api_timeout_ms": 15_000,
                     },
                     "飞书(Lark)": {
                         "id": "lark",
@@ -712,7 +756,7 @@ CONFIG_METADATA_2 = {
                     "telegram_polling_restart_delay": {
                         "description": "Telegram 轮询重启延迟",
                         "type": "float",
-                        "hint": "当轮询意外结束尝试自动重启时的延迟时间，理论上越短恢复越快，但过短（<0.1s）可能导致死循环针对 API 服务器的请求阻断。单位为秒。默认为 5s。",
+                        "hint": "当轮询意外结束尝试自动重启时的延迟时间,理论上越短恢复越快,但过短(<0.1s)可能导致死循环针对 API 服务器的请求阻断｡单位为秒｡默认为 5s｡",
                     },
                     "id": {
                         "description": "机器人名称",
@@ -891,6 +935,7 @@ CONFIG_METADATA_2 = {
                         "type": "bool",
                         "hint": "Webhook 模式下使用 AstrBot 统一 Webhook 入口,无需单独开启端口｡回调地址为 /api/platform/webhook/{webhook_uuid}｡",
                     },
+                    **PERSONAL_WECHAT_CONFIG_METADATA,
                     "webhook_uuid": {
                         "invisible": True,
                         "description": "Webhook UUID",
@@ -1840,7 +1885,7 @@ CONFIG_METADATA_2 = {
                     "ollama_disable_thinking": {
                         "description": "关闭思考模式",
                         "type": "bool",
-                        "hint": "关闭 Ollama 思考模式。",
+                        "hint": "关闭 Ollama 思考模式｡",
                     },
                     "custom_extra_body": {
                         "description": "自定义请求体参数",
@@ -2391,12 +2436,12 @@ CONFIG_METADATA_2 = {
                     "mimo-stt-system-prompt": {
                         "description": "系统提示词",
                         "type": "string",
-                        "hint": "用于指导 MiMo STT 转录行为的 system prompt。",
+                        "hint": "用于指导 MiMo STT 转录行为的 system prompt｡",
                     },
                     "mimo-stt-user-prompt": {
                         "description": "用户提示词",
                         "type": "string",
-                        "hint": "附加给 MiMo STT 的用户提示词，用于约束返回结果格式。",
+                        "hint": "附加给 MiMo STT 的用户提示词,用于约束返回结果格式｡",
                     },
                     "openai-tts-voice": {
                         "description": "voice",
@@ -2406,27 +2451,27 @@ CONFIG_METADATA_2 = {
                     "mimo-tts-voice": {
                         "description": "音色",
                         "type": "string",
-                        "hint": "MiMo TTS 的音色名称。可选值包括 'mimo_default'、'default_en'、'default_zh'。",
+                        "hint": "MiMo TTS 的音色名称｡可选值包括 'mimo_default'､'default_en'､'default_zh'｡",
                     },
                     "mimo-tts-format": {
                         "description": "输出格式",
                         "type": "string",
-                        "hint": "MiMo TTS 生成音频的格式。支持 'wav'、'mp3'、'pcm'。",
+                        "hint": "MiMo TTS 生成音频的格式｡支持 'wav'､'mp3'､'pcm'｡",
                     },
                     "mimo-tts-style-prompt": {
                         "description": "风格提示词",
                         "type": "string",
-                        "hint": "用于控制生成语音的说话风格、语气或情绪，例如温柔、活泼、沉稳等。可留空。",
+                        "hint": "用于控制生成语音的说话风格､语气或情绪,例如温柔､活泼､沉稳等｡可留空｡",
                     },
                     "mimo-tts-dialect": {
                         "description": "方言",
                         "type": "string",
-                        "hint": "指定生成语音时使用的方言或口音，例如四川话、粤语口音等。可留空。",
+                        "hint": "指定生成语音时使用的方言或口音,例如四川话､粤语口音等｡可留空｡",
                     },
                     "mimo-tts-seed-text": {
                         "description": "种子文本",
                         "type": "string",
-                        "hint": "用于引导音色和说话方式的参考文本，会影响生成语音的表达风格。",
+                        "hint": "用于引导音色和说话方式的参考文本,会影响生成语音的表达风格｡",
                     },
                     "fishaudio-tts-character": {
                         "description": "character",
@@ -3120,10 +3165,30 @@ CONFIG_METADATA_3 = {
                     "provider_settings.sandbox.booter": {
                         "description": "沙箱环境驱动器",
                         "type": "string",
-                        "options": ["shipyard_neo", "shipyard"],
-                        "labels": ["Shipyard Neo", "Shipyard"],
+                        "options": ["shipyard_neo", "shipyard", "bwrap"],
+                        "labels": ["Shipyard Neo", "Shipyard", "Bubblewrap"],
                         "condition": {
                             "provider_settings.computer_use_runtime": "sandbox",
+                        },
+                    },
+                    "provider_settings.sandbox.bwrap_rw_binds": {
+                        "description": "Bubblewrap Read & Write Binds",
+                        "type": "list",
+                        "items": {"type": "string"},
+                        "hint": "Bubblewrap 沙箱额外的读写挂载目录（回车添加，可添加多个。默认 /tmp, /var/tmp 已经是读写。",
+                        "condition": {
+                            "provider_settings.computer_use_runtime": "sandbox",
+                            "provider_settings.sandbox.booter": "bwrap",
+                        },
+                    },
+                    "provider_settings.sandbox.bwrap_ro_binds": {
+                        "description": "Bubblewrap Read Only Binds",
+                        "type": "list",
+                        "items": {"type": "string"},
+                        "hint": "Bubblewrap 沙箱额外的只读挂载目录（回车添加，可添加多个。宿主机系统目录/usr, /etc, /opt默认只读挂载于沙箱内的相同位置）。",
+                        "condition": {
+                            "provider_settings.computer_use_runtime": "sandbox",
+                            "provider_settings.sandbox.booter": "bwrap",
                         },
                     },
                     "provider_settings.sandbox.shipyard_neo_endpoint": {
@@ -3434,12 +3499,12 @@ CONFIG_METADATA_3 = {
                     "provider_settings.image_compress_enabled": {
                         "description": "启用图片压缩",
                         "type": "bool",
-                        "hint": "启用后，发送给多模态模型前会先压缩本地大图片。仅对 chat_completion 提供商生效。",
+                        "hint": "启用后,发送给多模态模型前会先压缩本地大图片｡仅对 chat_completion 提供商生效｡",
                     },
                     "provider_settings.image_compress_options.max_size": {
                         "description": "最大边长",
                         "type": "int",
-                        "hint": "压缩后图片的最长边，单位为像素。超过该尺寸时会按比例缩放。",
+                        "hint": "压缩后图片的最长边,单位为像素｡超过该尺寸时会按比例缩放｡",
                         "condition": {
                             "provider_settings.image_compress_enabled": True,
                         },
@@ -3448,7 +3513,53 @@ CONFIG_METADATA_3 = {
                     "provider_settings.image_compress_options.quality": {
                         "description": "压缩质量",
                         "type": "int",
-                        "hint": "JPEG 输出质量，范围为 1-100。值越高，画质越好，文件也越大。",
+                        "hint": "JPEG 输出质量,范围为 1-100｡值越高,画质越好,文件也越大｡",
+                        "condition": {
+                            "provider_settings.image_compress_enabled": True,
+                        },
+                        "slider": {"min": 1, "max": 100, "step": 1},
+                    },
+                    "provider_settings.image_compress_enabled": {
+                        "description": "启用图片压缩",
+                        "type": "bool",
+                        "hint": "启用后,发送给多模态模型前会先压缩本地大图片｡",
+                    },
+                    "provider_settings.image_compress_options.max_size": {
+                        "description": "最大边长",
+                        "type": "int",
+                        "hint": "压缩后图片的最长边,单位为像素｡超过该尺寸时会按比例缩放｡",
+                        "condition": {
+                            "provider_settings.image_compress_enabled": True,
+                        },
+                        "slider": {"min": 256, "max": 4096, "step": 64},
+                    },
+                    "provider_settings.image_compress_options.quality": {
+                        "description": "压缩质量",
+                        "type": "int",
+                        "hint": "JPEG 输出质量,范围为 1-100｡值越高,画质越好,文件也越大｡",
+                        "condition": {
+                            "provider_settings.image_compress_enabled": True,
+                        },
+                        "slider": {"min": 1, "max": 100, "step": 1},
+                    },
+                    "provider_settings.image_compress_enabled": {
+                        "description": "启用图片压缩",
+                        "type": "bool",
+                        "hint": "启用后,发送给多模态模型前会先压缩本地大图片｡",
+                    },
+                    "provider_settings.image_compress_options.max_size": {
+                        "description": "最大边长",
+                        "type": "int",
+                        "hint": "压缩后图片的最长边,单位为像素｡超过该尺寸时会按比例缩放｡",
+                        "condition": {
+                            "provider_settings.image_compress_enabled": True,
+                        },
+                        "slider": {"min": 256, "max": 4096, "step": 64},
+                    },
+                    "provider_settings.image_compress_options.quality": {
+                        "description": "压缩质量",
+                        "type": "int",
+                        "hint": "JPEG 输出质量,范围为 1-100｡值越高,画质越好,文件也越大｡",
                         "condition": {
                             "provider_settings.image_compress_enabled": True,
                         },

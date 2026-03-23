@@ -89,7 +89,10 @@ def test_expand_env_placeholders_resolves_env_and_default(
     assert _expand_env_placeholders("${MISSING:-3002}", "port") == "3002"
 
 
-def test_expand_env_placeholders_raises_for_unresolved_variable():
+def test_expand_env_placeholders_raises_for_unresolved_variable(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.delenv("HOST", raising=False)
     with pytest.raises(ValueError, match="dashboard host: HOST"):
         _expand_env_placeholders("${HOST}", "host")
 
@@ -248,7 +251,7 @@ async def test_subagent_config_accepts_default_persona(
             headers=authenticated_header,
         )
 
-
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", [[], "x"])
 async def test_batch_delete_sessions_rejects_non_object_payload(
     app: Quart, authenticated_header: dict, payload
@@ -915,19 +918,15 @@ async def test_batch_upload_skills_accepts_valid_skill_archive(
         _fake_sync_skills_to_active_sandboxes,
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_data_path",
+        "astrbot.core.utils.astrbot_path.get_astrbot_data_path",
         lambda: str(data_dir),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_skills_path",
+        "astrbot.core.utils.astrbot_path.get_astrbot_skills_path",
         lambda: str(skills_dir),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_temp_path",
-        lambda: str(temp_dir),
-    )
-    monkeypatch.setattr(
-        "astrbot.dashboard.routes.skills.get_astrbot_temp_path",
+        "astrbot.core.utils.astrbot_path.get_astrbot_temp_path",
         lambda: str(temp_dir),
     )
 

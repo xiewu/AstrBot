@@ -8,7 +8,7 @@ from typing import cast
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram import BotCommand, Update
 from telegram.constants import ChatType
-from telegram.error import InvalidToken, Unauthorized
+from telegram.error import Forbidden, InvalidToken
 from telegram.ext import ApplicationBuilder, ContextTypes, ExtBot, filters
 from telegram.ext import MessageHandler as TelegramMessageHandler
 
@@ -51,6 +51,7 @@ class TelegramPlatformAdapter(Platform):
         super().__init__(platform_config, event_queue)
         self.settings = platform_settings
         self.client_self_id = uuid.uuid4().hex[:8]
+        self.sdk_plugin_bridge = None
 
         base_url = self.config.get(
             "telegram_api_base_url",
@@ -183,7 +184,7 @@ class TelegramPlatformAdapter(Platform):
                     )
             except asyncio.CancelledError:
                 raise
-            except (Unauthorized, InvalidToken) as e:
+            except (Forbidden, InvalidToken) as e:
                 logger.error(
                     f"Telegram token is invalid or unauthorized: {e}. Polling stopped."
                 )
@@ -247,6 +248,31 @@ class TelegramPlatformAdapter(Platform):
                                 f"'{command_dict[cmd_name]}'"
                             )
                         command_dict.setdefault(cmd_name, description)
+
+        sdk_bridge = getattr(self, "sdk_plugin_bridge", None)
+        if sdk_bridge is not None:
+            for item in sdk_bridge.list_native_command_candidates("telegram"):
+                cmd_name = str(item.get("name", "")).strip()
+                if not cmd_name or cmd_name in skip_commands:
+                    continue
+                if not re.match(r"^[a-z0-9_]+$", cmd_name) or len(cmd_name) > 32:
+                    continue
+
+                description = str(item.get("description") or "").strip()
+                if not description:
+                    if item.get("is_group"):
+                        description = f"Command group: {cmd_name}"
+                    else:
+                        description = f"Command: {cmd_name}"
+                if len(description) > 30:
+                    description = description[:30] + "..."
+
+                if cmd_name in command_dict:
+                    logger.warning(
+                        f"命令名 '{cmd_name}' 重复注册，将使用首次注册的定义: "
+                        f"'{command_dict[cmd_name]}'"
+                    )
+                command_dict.setdefault(cmd_name, description)
 
         commands_a = sorted(command_dict.keys())
         return [BotCommand(cmd, command_dict[cmd]) for cmd in commands_a]

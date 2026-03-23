@@ -1,3 +1,5 @@
+import os
+import sys
 from importlib import resources
 from pathlib import Path
 
@@ -23,10 +25,15 @@ class DashboardManager:
             match dashboard_version:
                 case None:
                     click.echo("Dashboard is not installed")
+                    # Skip interactive prompt in non-interactive environments
+                    if not sys.stdin.isatty():
+                        click.echo(
+                            "Skipping interactive dashboard installation in non-interactive mode."
+                        )
+                        return
                     if click.confirm(
                         "Install dashboard?",
                         default=True,
-                        abort=True,
                     ):
                         click.echo("Installing dashboard...")
                         try:
@@ -39,6 +46,8 @@ class DashboardManager:
                             click.echo("Dashboard installed successfully")
                         except Exception as e:
                             click.echo(f"Failed to install dashboard: {e}")
+                    else:
+                        click.echo("Dashboard installation declined.")
 
                 case str():
                     if (

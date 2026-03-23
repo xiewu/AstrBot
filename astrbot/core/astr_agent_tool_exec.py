@@ -158,7 +158,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                         exc_info=True,
                     )
 
-            asyncio.create_task(_run_in_background())
+            asyncio.create_task(_run_in_background())  # noqa: RUF006
             text_content = mcp.types.TextContent(
                 type="text",
                 text=f"Background task submitted. task_id={task_id}",
@@ -406,7 +406,7 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
                     exc_info=True,
                 )
 
-        asyncio.create_task(_run_handoff_in_background())
+        asyncio.create_task(_run_handoff_in_background())  # noqa: RUF006
 
         text_content = mcp.types.TextContent(
             type="text",
@@ -643,6 +643,24 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
             method_name = "run"
         if awaitable is None:
             raise ValueError("Tool must have a valid handler or override 'run' method.")
+
+        sdk_plugin_bridge = getattr(
+            run_context.context.context, "sdk_plugin_bridge", None
+        )
+        if sdk_plugin_bridge is not None:
+            try:
+                await sdk_plugin_bridge.dispatch_message_event(
+                    "calling_func_tool",
+                    event,
+                    {
+                        "tool_name": tool.name,
+                        "tool_args": json.loads(
+                            json.dumps(tool_args, ensure_ascii=False, default=str)
+                        ),
+                    },
+                )
+            except Exception as exc:
+                logger.warning("SDK calling_func_tool dispatch failed: %s", exc)
 
         wrapper = call_local_llm_tool(
             context=run_context,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from asyncio import Queue
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from deprecated import deprecated
 
@@ -165,7 +165,7 @@ class Context:
         system_prompt: str | None = None,
         contexts: list[Message] | None = None,
         max_steps: int = 30,
-        tool_call_timeout: int = 60,
+        tool_call_timeout: int = 120,
         stream: bool = False,
         agent_hooks: BaseAgentRunHooks[AstrAgentContext] | None = None,
         agent_context: AstrAgentContext | None = None,
@@ -387,7 +387,7 @@ class Context:
         )
         if prov and not isinstance(prov, TTSProvider):
             raise ValueError("返回的 Provider 不是 TTSProvider 类型")
-        return prov
+        return cast(TTSProvider | None, prov)
 
     def get_using_stt_provider(self, umo: str | None = None) -> STTProvider | None:
         """获取当前使用的用于 STT 任务的 Provider｡
@@ -407,7 +407,7 @@ class Context:
         )
         if prov and not isinstance(prov, STTProvider):
             raise ValueError("返回的 Provider 不是 STTProvider 类型")
-        return prov
+        return cast(STTProvider | None, prov)
 
     def get_config(self, umo: str | None = None) -> AstrBotConfig:
         """获取 AstrBot 的配置｡
@@ -609,9 +609,11 @@ class Context:
         """
         md = StarHandlerMetadata(
             event_type=EventType.OnLLMRequestEvent,
-            handler_full_name=func_obj.__module__ + "_" + func_obj.__name__,
-            handler_name=func_obj.__name__,
-            handler_module_path=func_obj.__module__,
+            handler_full_name=getattr(func_obj, "__module__", "")
+            + "_"
+            + getattr(func_obj, "__name__", ""),
+            handler_name=getattr(func_obj, "__name__", ""),
+            handler_module_path=getattr(func_obj, "__module__", ""),
             handler=func_obj,
             event_filters=[],
             desc=desc,
@@ -657,9 +659,11 @@ class Context:
         """
         md = StarHandlerMetadata(
             event_type=EventType.AdapterMessageEvent,
-            handler_full_name=awaitable.__module__ + "_" + awaitable.__name__,
-            handler_name=awaitable.__name__,
-            handler_module_path=awaitable.__module__,
+            handler_full_name=getattr(awaitable, "__module__", "")
+            + "_"
+            + getattr(awaitable, "__name__", ""),
+            handler_name=getattr(awaitable, "__name__", ""),
+            handler_module_path=getattr(awaitable, "__module__", ""),
             handler=awaitable,
             event_filters=[],
             desc=desc,
