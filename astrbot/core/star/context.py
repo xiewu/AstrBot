@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from asyncio import Queue
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Coroutine
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from deprecated import deprecated
