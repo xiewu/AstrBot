@@ -820,7 +820,6 @@ class ProviderOpenAIOfficial(Provider):
 
         model = model or self.get_model()
         payloads = {**kwargs, "messages": context_query, "model": model}
-        # Filter out non-JSON-serializable objects (e.g. asyncio.Event from abort_signal)
         payloads.pop("abort_signal", None)
 
         self._finally_convert_payload(payloads)
@@ -860,7 +859,7 @@ class ProviderOpenAIOfficial(Provider):
         """处理API错误并尝试恢复"""
         if "429" in str(e):
             logger.warning(
-                f"API 调用过于频繁,尝试使用其他 Key 重试｡当前 Key: {chosen_key[:12]}",
+                "API 调用过于频繁,尝试使用其他 Key 重试｡",
             )
             # 最后一次不等待
             if retry_cnt < max_retries - 1:

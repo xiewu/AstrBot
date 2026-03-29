@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import AuthLogin from "../authForms/AuthLogin.vue";
+import DailyQuote from "@/components/shared/DailyQuote.vue";
+import DiamondBg from "@/components/auth/DiamondBg.vue";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher.vue";
 import { onMounted, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useApiStore } from "@/stores/api";
 import { useRouter } from "vue-router";
 import { useCustomizerStore } from "@/stores/customizer";
-import { useModuleI18n } from "@/i18n/composables";
+import { useI18n, useModuleI18n } from "@/i18n/composables";
 import { useToast } from "@/utils/toast";
 import { getApiBaseUrlValidationError } from "@/utils/request";
 
@@ -15,6 +17,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const apiStore = useApiStore();
 const customizer = useCustomizerStore();
+const { locale } = useI18n();
 const { tm: t } = useModuleI18n("features/auth");
 const toast = useToast();
 
@@ -112,8 +115,9 @@ onMounted(() => {
 
 <template>
   <div class="login-page-container">
+    <DiamondBg />
     <v-card class="login-card" elevation="1">
-      <v-card-title>
+      <v-card-title :key="locale">
         <div class="d-flex justify-space-between align-center w-100">
           <img
             width="80"
@@ -175,7 +179,7 @@ onMounted(() => {
           {{ t("logo.title") }}
         </div>
         <div class="mt-2 ml-2" style="font-size: 14px; color: grey">
-          {{ t("logo.subtitle") }}
+          <DailyQuote />
         </div>
       </v-card-title>
       <v-card-text>
@@ -308,10 +312,29 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+  // Radial fade mask around login card area
+  mask-image: radial-gradient(
+    ellipse 60% 70% at 50% 50%,
+    black 30%,
+    transparent 70%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 60% 70% at 50% 50%,
+    black 30%,
+    transparent 70%
+  );
 }
 
 .login-card {
   width: 400px;
   padding: 8px;
+  background: rgba(6, 8, 14, 0.82) !important;
+  backdrop-filter: blur(28px) saturate(1.1);
+  border: 1px solid rgba(0, 242, 255, 0.2);
+  box-shadow:
+    0 0 80px rgba(0, 26, 51, 0.95),
+    0 0 120px rgba(0, 26, 51, 0.6),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 </style>

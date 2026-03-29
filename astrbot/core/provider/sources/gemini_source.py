@@ -4,7 +4,7 @@ import json
 import logging
 import random
 from collections.abc import AsyncGenerator
-from typing import cast
+from typing import ClassVar, cast
 
 import aiofiles
 from google import genai
@@ -39,14 +39,14 @@ logging.getLogger("google_genai.types").addFilter(SuppressNonTextPartsWarning())
     "Google Gemini Chat Completion 提供商适配器",
 )
 class ProviderGoogleGenAI(Provider):
-    CATEGORY_MAPPING = {
+    CATEGORY_MAPPING: ClassVar[dict[str, types.HarmCategory]] = {
         "harassment": types.HarmCategory.HARM_CATEGORY_HARASSMENT,
         "hate_speech": types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
         "sexually_explicit": types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
         "dangerous_content": types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
     }
 
-    THRESHOLD_MAPPING = {
+    THRESHOLD_MAPPING: ClassVar[dict[str, types.HarmBlockThreshold]] = {
         "BLOCK_NONE": types.HarmBlockThreshold.BLOCK_NONE,
         "BLOCK_ONLY_HIGH": types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
         "BLOCK_MEDIUM_AND_ABOVE": types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
@@ -112,12 +112,12 @@ class ProviderGoogleGenAI(Provider):
             if len(keys) > 0:
                 self.set_key(random.choice(keys))
                 logger.info(
-                    f"检测到 Key 异常({e.message}),正在尝试更换 API Key 重试... 当前 Key: {self.chosen_api_key[:12]}...",
+                    f"检测到 Key 异常({e.message}),正在尝试更换 API Key 重试...",
                 )
                 await asyncio.sleep(1)
                 return True
             logger.error(
-                f"检测到 Key 异常({e.message}),且已没有可用的 Key｡ 当前 Key: {self.chosen_api_key[:12]}...",
+                f"检测到 Key 异常({e.message}),且已没有可用的 Key｡",
             )
             raise Exception("达到了 Gemini 速率限制, 请稍后再试...")
 
