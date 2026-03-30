@@ -47,9 +47,8 @@
                     <v-list-item v-bind="itemProps">
                       <template #prepend>
                         <img
-                          :src="
-                            getPlatformIcon(platformTemplates[item.raw].type)
-                          "
+                          v-if="getPlatformIcon(platformTemplates[item.raw]?.type || item.raw)"
+                          :src="getPlatformIcon(platformTemplates[item.raw]?.type || item.raw)"
                           style="
                             width: 32px;
                             height: 32px;
@@ -57,6 +56,9 @@
                             margin-right: 16px;
                           "
                         />
+                        <v-icon v-else :color="getPlatformColor(item.raw)">
+                          {{ getPlatformIconName(item.raw) }}
+                        </v-icon>
                       </template>
                     </v-list-item>
                   </template>
@@ -543,6 +545,7 @@ import ConfigPage from "@/views/ConfigPage.vue";
 export default {
   name: "AddNewPlatform",
   components: { AstrBotConfig, AstrBotCoreConfigWrapper, ConfigPage },
+  emits: ["update:show", "show-toast", "refresh-config"],
   props: {
     show: {
       type: Boolean,
@@ -795,6 +798,52 @@ export default {
       return getPlatformIcon(platformType);
     },
     getPlatformDescription,
+    getPlatformIconName(name) {
+      const iconMap = {
+        aiocqhttp: "mdi-robot",
+        qq_official: "mdi-qqchat",
+        qq_official_webhook: "mdi-qqchat",
+        telegram: "mdi-telegram",
+        discord: "mdi-discord",
+        wecom: "mdi-microsoft-teams",
+        wecom_ai_bot: "mdi-microsoft-teams",
+        weixin_oc: "mdi-wechat",
+        weixin_official_account: "mdi-wechat",
+        lark: "mdi-feishu",
+        dingtalk: "mdi-bubble-outline",
+        slack: "mdi-slack",
+        kook: "mdi-controller",
+        vocechat: "mdi-message-text",
+        satori: "mdi-api",
+        misskey: "mdi-alpha",
+        line: "mdi-message",
+        webchat: "mdi-chat",
+      };
+      return iconMap[name] || "mdi-earth";
+    },
+    getPlatformColor(name) {
+      const colorMap = {
+        aiocqhttp: "#12c2e9",
+        qq_official: "#12c2e9",
+        qq_official_webhook: "#12c2e9",
+        telegram: "#26a5e4",
+        discord: "#5865f2",
+        wecom: "#07c160",
+        wecom_ai_bot: "#07c160",
+        weixin_oc: "#07c160",
+        weixin_official_account: "#07c160",
+        lark: "#4a90e2",
+        dingtalk: "#1677ff",
+        slack: "#4a154b",
+        kook: "#f47b20",
+        vocechat: "#7b68ee",
+        satori: "#9b59b6",
+        misskey: "#86b300",
+        line: "#00b900",
+        webchat: "#00acee",
+      };
+      return colorMap[name] || "grey";
+    },
     resetForm() {
       this.selectedPlatformType = null;
       this.selectedPlatformConfig = null;

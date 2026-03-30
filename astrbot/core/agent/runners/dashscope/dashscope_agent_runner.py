@@ -12,18 +12,17 @@ from dashscope.app.application_response import ApplicationResponse
 
 import astrbot.core.message.components as Comp
 from astrbot.core import logger, sp
+from astrbot.core.agent.hooks import BaseAgentRunHooks
+from astrbot.core.agent.response import AgentResponseData
+from astrbot.core.agent.run_context import ContextWrapper, TContext
+from astrbot.core.agent.runners.base import AgentResponse, AgentState, BaseAgentRunner
+from astrbot.core.agent.tool_executor import BaseFunctionToolExecutor
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.provider.entities import (
     LLMResponse,
     ProviderRequest,
 )
 from astrbot.core.provider.provider import Provider
-
-from ...hooks import BaseAgentRunHooks
-from ...response import AgentResponseData
-from ...run_context import ContextWrapper, TContext
-from ...tool_executor import BaseFunctionToolExecutor
-from ..base import AgentResponse, AgentState, BaseAgentRunner
 
 if sys.version_info >= (3, 12):
     from typing import override
@@ -132,9 +131,7 @@ class DashscopeAgentRunner(BaseAgentRunner[TContext]):
             )
 
     @override
-    async def step_until_done(
-        self, max_step: int
-    ) -> AsyncGenerator[AgentResponse, None]:
+    async def step_until_done(self, max_step: int):
         while not self.done():
             async for resp in self.step():
                 yield resp
@@ -261,7 +258,7 @@ class DashscopeAgentRunner(BaseAgentRunner[TContext]):
             key="session_variables",
             default={},
         )
-        payload_vars.update(session_var)
+        payload_vars.update(session_var)  # type: ignore[arg-type]
 
         if (
             self.dashscope_app_type in ["agent", "dialog-workflow"]

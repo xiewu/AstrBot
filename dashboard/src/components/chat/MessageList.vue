@@ -28,7 +28,10 @@
           <div
             class="message-bubble user-bubble"
             :class="{ 'has-audio': hasAudio(msg.content.message) }"
-            :style="{ backgroundColor: 'rgb(var(--v-theme-chatMessageBubble))' }"
+            :style="{
+              backgroundColor: 'var(--v-theme-chatMessageBubble)',
+              color: '#E2E2E7 !important',
+            }"
           >
             <!-- 遍历 message parts -->
             <template
@@ -52,11 +55,7 @@
               <!-- 纯文本 -->
               <pre
                 v-else-if="part.type === 'plain' && part.text"
-                style="
-                  font-family: inherit;
-                  white-space: pre-wrap;
-                  word-wrap: break-word;
-                "
+                class="bubble-text"
                 >{{ part.text }}</pre
               >
 
@@ -182,7 +181,13 @@
             </v-icon>
           </v-avatar>
           <div class="bot-message-content">
-            <div class="message-bubble bot-bubble">
+            <div
+              class="message-bubble bot-bubble"
+              :style="{
+                backgroundColor: 'var(--v-theme-chatAssistantBubble)',
+                color: '#E2E2E7 !important',
+              }"
+            >
               <!-- Loading state -->
               <div v-if="msg.content.isLoading" class="loading-container">
                 <span class="loading-text">{{ tm("message.loading") }}</span>
@@ -1246,7 +1251,7 @@ export default {
 
 .loading-text {
   font-size: 14px;
-  color: var(--v-theme-secondaryText);
+  color: var(--v-theme-on-surface-variant);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -1350,7 +1355,7 @@ export default {
 
 .message-time {
   font-size: 12px;
-  color: var(--v-theme-secondaryText);
+  color: var(--v-theme-on-surface-variant);
   opacity: 0.7;
   white-space: nowrap;
 }
@@ -1358,7 +1363,7 @@ export default {
 /* Agent Stats Info Icon */
 .stats-info-icon {
   margin-left: 6px;
-  color: var(--v-theme-secondaryText);
+  color: var(--v-theme-on-surface-variant);
   opacity: 0.6;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -1439,7 +1444,7 @@ export default {
 
 .reply-quote-text {
   font-size: 13px;
-  color: var(--v-theme-secondaryText);
+  color: var(--v-theme-on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1461,7 +1466,7 @@ export default {
 }
 
 .user-bubble {
-  color: var(--v-theme-primaryText);
+  color: var(--v-theme-on-surface);
   padding: 12px 18px;
   font-size: 15px;
   max-width: 60%;
@@ -1470,7 +1475,7 @@ export default {
 
 .bot-bubble {
   border: 1px solid var(--v-theme-border);
-  color: var(--v-theme-primaryText);
+  color: var(--v-theme-on-surface);
   font-size: 16px;
   max-width: 100%;
   padding-left: 12px;
@@ -1616,6 +1621,11 @@ export default {
   line-height: 1.6;
 }
 
+/* Bubble text: hardcoded for debugging - #E2E2E7 = BlueBusinessDark primaryText */
+.bubble-text {
+  color: #E2E2E7 !important;
+}
+
 /* Stats Menu 样式 */
 .stats-menu-card {
   border-radius: 8px !important;
@@ -1638,14 +1648,14 @@ export default {
 
 .stats-menu-label {
   font-size: 13px;
-  color: var(--v-theme-secondaryText);
+  color: var(--v-theme-on-surface-variant);
 }
 
 .stats-menu-value {
   font-size: 13px;
   font-weight: 600;
   font-family: "Fira Code", "Consolas", monospace;
-  color: var(--v-theme-primaryText);
+  color: var(--v-theme-on-surface);
 }
 
 /* 图片预览样式 */

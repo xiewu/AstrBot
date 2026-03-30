@@ -14,7 +14,7 @@
         border: isDark ? 'none' : '1px solid #e0e0e0',
         borderRadius: '24px',
         boxShadow: isDark ? 'none' : '0px 2px 2px rgba(0, 0, 0, 0.1)',
-        backgroundColor: isDark ? '#2d2d2d' : 'transparent',
+        backgroundColor: isDark ? 'rgba(15, 15, 22, 0.6)' : 'transparent',
         position: 'relative',
       }"
     >
@@ -579,6 +579,34 @@ defineExpose({
 </script>
 
 <style scoped>
+/* Dark mode input container glass */
+.v-theme--bluebusinessdarktheme :deep(.input-container) {
+  background: rgba(15, 15, 22, 0.6) !important;
+  backdrop-filter: blur(16px) saturate(1.2) !important;
+  border: 1px solid rgba(0, 242, 255, 0.08) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Light mode: clean white frosted glass */
+.v-theme--bluebusinesstheme :deep(.input-container) {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(20px) saturate(1.1) !important;
+  border: 1px solid rgba(0, 49, 83, 0.1) !important;
+  box-shadow: 0 2px 12px rgba(26, 46, 60, 0.08) !important;
+}
+
+/* Fix placeholder visibility in dark mode */
+.v-theme--bluebusinessdarktheme .chat-textarea::placeholder {
+  color: rgba(228, 225, 230, 0.35) !important;
+  opacity: 1 !important;
+}
+
+/* Fix placeholder visibility in light mode */
+.v-theme--bluebusinesstheme .chat-textarea::placeholder {
+  color: rgba(26, 46, 80, 0.35) !important;
+  opacity: 1 !important;
+}
+
 .input-area {
   padding: 16px;
   background-color: transparent;

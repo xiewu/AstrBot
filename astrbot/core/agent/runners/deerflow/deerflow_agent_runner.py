@@ -4,7 +4,6 @@ import json
 import sys
 import typing as T
 from collections import deque
-from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
@@ -12,6 +11,11 @@ from uuid import uuid4
 import astrbot.core.message.components as Comp
 from astrbot import logger
 from astrbot.core import sp
+from astrbot.core.agent.hooks import BaseAgentRunHooks
+from astrbot.core.agent.response import AgentResponse, AgentResponseData
+from astrbot.core.agent.run_context import ContextWrapper, TContext
+from astrbot.core.agent.runners.base import AgentState, BaseAgentRunner
+from astrbot.core.agent.tool_executor import BaseFunctionToolExecutor
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.provider.entities import (
     LLMResponse,
@@ -20,11 +24,6 @@ from astrbot.core.provider.entities import (
 from astrbot.core.provider.provider import Provider
 from astrbot.core.utils.config_number import coerce_int_config
 
-from ...hooks import BaseAgentRunHooks
-from ...response import AgentResponseData
-from ...run_context import ContextWrapper, TContext
-from ...tool_executor import BaseFunctionToolExecutor
-from ..base import AgentResponse, AgentState, BaseAgentRunner
 from .constants import DEERFLOW_SESSION_PREFIX, DEERFLOW_THREAD_ID_KEY
 from .deerflow_api_client import DeerFlowAPIClient
 from .deerflow_content_mapper import (
@@ -319,9 +318,7 @@ class DeerFlowAgentRunner(BaseAgentRunner[TContext]):
             yield await self._finish_with_error(err_msg)
 
     @override
-    async def step_until_done(
-        self, max_step: int
-    ) -> AsyncGenerator[AgentResponse, None]:
+    async def step_until_done(self, max_step: int):
         if max_step <= 0:
             raise ValueError("max_step must be greater than 0")
 
