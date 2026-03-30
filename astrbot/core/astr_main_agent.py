@@ -333,11 +333,11 @@ async def _ensure_persona_and_skills(
             for tool_name in persona["tools"]:
                 tool = tmgr.get_func(tool_name)
                 if tool and tool.active:
-                    persona_toolset.add_tool(tool)
+                    persona_toolset.add_tool(tool)  # type: ignore[arg-type]
     if not req.func_tool:
-        req.func_tool = persona_toolset
+        req.func_tool = persona_toolset  # type: ignore[assignment]
     else:
-        req.func_tool.merge(persona_toolset)
+        req.func_tool.merge(persona_toolset)  # type: ignore[arg-type]
 
     # sub agents integration
     orch_cfg = plugin_context.get_config().get("subagent_orchestrator", {})

@@ -100,6 +100,10 @@ USER_INTERRUPTION_MESSAGE = (
 
 
 class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
+    EMPTY_OUTPUT_RETRY_ATTEMPTS = 3
+    EMPTY_OUTPUT_RETRY_WAIT_MIN_S = 1
+    EMPTY_OUTPUT_RETRY_WAIT_MAX_S = 4
+
     def _get_persona_custom_error_message(self) -> str | None:
         """Read persona-level custom error message from event extras when available."""
         event = getattr(self.run_context.context, "event", None)
@@ -906,7 +910,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             )
 
     def _build_tool_requery_context(
-        self, tool_names: list[str]
+        self, tool_names: list[str], extra_instruction: str | None = None
     ) -> list[dict[str, Any]]:
         """Build contexts for re-querying LLM with param-only tool schemas."""
         contexts: list[dict[str, Any]] = []
@@ -921,6 +925,8 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
             + ". Now call the tool(s) with required arguments using the tool schema, "
             "and follow the existing tool-use rules."
         )
+        if extra_instruction:
+            instruction = f"{instruction}\n{extra_instruction}"
         if contexts and contexts[0].get("role") == "system":
             content = contexts[0].get("content") or ""
             contexts[0]["content"] = f"{content}\n{instruction}"
@@ -1047,7 +1053,9 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     "Tool execution interrupted before reading the next tool result."
                 )
 
-            next_result_task = asyncio.create_task(anext(executor))
+            async def _get_next():
+                return await anext(executor)
+            next_result_task = asyncio.create_task(_get_next())
             abort_task = asyncio.create_task(self._abort_signal.wait())
             self.tasks.add(next_result_task)
             self.tasks.add(abort_task)

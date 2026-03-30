@@ -42,7 +42,7 @@ class AstrBotConfigManager:
         self.confs: dict[str, AstrBotConfig] = {}
         """uuid / "default" -> AstrBotConfig"""
         self.confs["default"] = default_config
-        self.abconf_data = None
+        self.abconf_data: dict | None = None
         self._load_all_configs()
 
     def _get_abconf_data(self) -> dict:
@@ -54,7 +54,7 @@ class AstrBotConfigManager:
                 scope="global",
                 scope_id="global",
             )
-        return self.abconf_data
+        return self.abconf_data  # type: ignore[return-value]
 
     def _load_all_configs(self) -> None:
         """Load all configurations from the shared preferences."""
@@ -114,7 +114,7 @@ class AstrBotConfigManager:
             scope_id="global",
         )
         random_word = abconf_name or uuid.uuid4().hex[:8]
-        abconf_data[abconf_id] = {
+        abconf_data[abconf_id] = {  # type: ignore[index]
             "path": abconf_path,
             "name": random_word,
         }
